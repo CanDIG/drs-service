@@ -5,7 +5,7 @@ import sys
 import pytest
 import requests
 from pathlib import Path
-from authx.auth import get_minio_client, get_site_admin_token, store_aws_credential
+from authx.auth import get_site_admin_token, store_aws_credential
 from time import sleep
 
 # assumes that we are running pytest from the repo directory
