@@ -167,8 +167,7 @@ def list_drs_objects(program_id=None, submitter_sample_id=None):
         elif submitter_sample_id is None: # searching for program
             result = session.query(DrsObject).filter_by(program_id=program_id).all()
         else: # searching for experiments with sample registration IDs
-            result = session.query(DrsObject).filter_by(name=submitter_sample_id).all()
-
+            result = session.query(DrsObject).filter_by(name=submitter_sample_id).filter(DrsObject.description.in_(['wgs', 'wts'])).all()
         if result is not None:
             new_obj = json.loads(str(result))
             return new_obj
