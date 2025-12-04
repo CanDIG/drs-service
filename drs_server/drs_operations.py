@@ -349,6 +349,7 @@ def _is_file_object(drs_object):
 def _format_experiment(experiment_drs_obj):
     result = {
         "experiment_id": experiment_drs_obj["name"],
+        "program": experiment_drs_obj["program"],
         "genomes": [],
         "transcriptomes": [],
         "variants": [],
@@ -361,7 +362,6 @@ def _format_experiment(experiment_drs_obj):
             result["genomes"].append(experiment_drs_obj["id"])
         elif experiment_drs_obj["description"] == "wts":
             result["transcriptomes"].append(experiment_drs_obj["id"])
-        result["program"] = experiment_drs_obj["program"]
         analysis_contents = drs_database.get_contents_for_drs_obj(experiment_drs_obj["id"])
         if len(analysis_contents) > 0:
             for analysis in analysis_contents:
