@@ -367,7 +367,6 @@ def _format_experiment(experiment_drs_obj):
             for analysis in analysis_contents:
                 # get the analysis object
                 analysis_obj = drs_database.get_drs_object(analysis["id"])
-                result[analysis_obj["id"]] = analysis_obj
                 if analysis_obj["description"] == "sequence_variation":
                     result["variants"].append(analysis_obj["name"])
                 elif analysis_obj["description"] == "reference_alignment":
