@@ -303,3 +303,57 @@ def _get_access_url(access_id):
         return url, 500
     else:
         return {"message": f"Malformed access_id {access_id}: should be in the form endpoint/bucket/item", "method": "_get_access_url"}, 400
+
+
+def _is_experiment_object(drs_object):
+    if "access_methods" not in drs_object:
+        if drs_object["description"] in ["wgs", "wts"]:
+            return True
+    return False
+
+
+def _is_analysis_object(drs_object):
+    # This is the bundling object; it has contents referring to the files and experiments. Its unique characteristic is that it has a reference_genome.
+    if "access_methods" not in drs_object:
+        if "reference_genome" in drs_object:
+            return True
+    return False
+
+
+def _is_file_object(drs_object):
+    # File objects have access methods.
+    if "access_methods" in drs_object:
+        return True
+    return False
+
+
+def _format_experiment(experiment_drs_obj):
+    result = {
+        "experiment_id": experiment_drs_obj["name"],
+        "genomes": [],
+        "transcriptomes": [],
+        "variants": [],
+        "reads": [],
+        "expressions": []
+    }
+
+    if _is_experiment_object(experiment_drs_obj):
+        if experiment_drs_obj["description"] == "wgs":
+            result["genomes"].append(experiment_drs_obj["id"])
+        elif experiment_drs_obj["description"] == "wts":
+            result["transcriptomes"].append(experiment_drs_obj["id"])
+        result["program"] = experiment_drs_obj["program"]
+        analysis_contents = drs_database.get_contents_for_drs_obj(experiment_drs_obj["id"])
+        if len(analysis_contents) > 0:
+            for analysis in analysis_contents:
+                # get the analysis object
+                analysis_obj = drs_database.get_drs_object(analysis["id"])
+                result[analysis_obj["id"]] = analysis_obj
+                if analysis_obj["description"] == "sequence_variation":
+                    result["variants"].append(analysis_obj["name"])
+                elif analysis_obj["description"] == "reference_alignment":
+                    result["reads"].append(analysis_obj["name"])
+                elif analysis_obj["description"] == "sequence_annotation":
+                    result["expressions"].append(analysis_obj["name"])
+        return result
+    return None
