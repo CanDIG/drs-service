@@ -140,6 +140,26 @@ paths:
                     description: array of strings that need to be passed with the URL to get bytes
       tags:
         - Objects
+  /experiments:
+    parameters:
+     - $ref: '#/components/parameters/BearerAuth'
+    post:
+      summary: List all DRS Experiment objects matching an array of submitter_sample_ids. Only authorized for site admins and authzed services.
+      operationId: drs_operations.list_experiments
+      requestBody:
+        $ref: '#/components/requestBodies/ExperimentsRequest'
+      responses:
+        200:
+          description: The `DrsObjects` were found successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  anyOf:
+                    - $ref: '#/components/schemas/ExperimentTicket'
+      tags:
+        - Objects
   /programs:
     parameters:
       - $ref: '#/components/parameters/BearerAuth'
@@ -296,6 +316,18 @@ components:
         'application/json':
           schema:
             $ref: '#/components/schemas/Program'
+    ExperimentsRequest:
+      description: list of submitter sample ids requested
+      required: false
+      content:
+        'application/json':
+          schema:
+            type: object
+            properties:
+              submitter_sample_ids:
+                type: array
+                items:
+                  type: string
 
   schemas:
     Program:
@@ -338,6 +370,35 @@ components:
     DrsUri:
       type: string
       description: a DRS object's self_uri
+    ExperimentTicket:
+      type: object
+      properties:
+          experiment_id:
+              type: string
+              description: MoH submitter_sample_id from a Sample Registration associated with a specimen.
+          program:
+              type: string
+              description: MoH program ID
+          genome:
+              type: array
+              description: An array of associated AnalysisDrsObjects that describe reads, e.g. fastqs.
+              items:
+                  type: string
+          transcriptome:
+              type: array
+              description: An array of associated AnalysisDrsObjects that describe transcriptome data.
+              items:
+                  type: string
+          variants:
+              type: array
+              description: An array of associated AnalysisDataDrsObjects that describe variant files.
+              items:
+                  type: string
+          reads:
+              type: array
+              description: An array of associated AnalysisDataDrsObjects that describe read files, e.g. bams.
+              items:
+                  type: string
     ExperimentDrsObject:
       type: object
       description: A DrsObject that describes the sequencing experiment.
