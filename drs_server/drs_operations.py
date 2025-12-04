@@ -229,8 +229,9 @@ def get_program_status(program_id):
         "index_in_progress": [],
         "index_errored": []
     }
-    for drs_uri in new_program['drsobjects']:
-        drs_obj, status_code = get_object_for_drs_uri(drs_uri)
+    drs_objects = drs_database.list_drs_objects(program_id=program_id)
+    for drs_obj in drs_objects:
+        drs_uri = drs_obj["self_uri"]
         if "metadata" in drs_obj:
             if "indexed" in drs_obj["metadata"]:
                 if drs_obj["metadata"]['indexed'] == 1:
