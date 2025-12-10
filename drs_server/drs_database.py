@@ -167,8 +167,7 @@ def list_drs_objects(program_id=None, submitter_sample_id=None):
         elif submitter_sample_id is None: # searching for program
             result = session.query(DrsObject).filter_by(program_id=program_id).all()
         else: # searching for experiments with sample registration IDs
-            result = session.query(DrsObject).filter_by(name=submitter_sample_id).all()
-
+            result = session.query(DrsObject).filter_by(name=submitter_sample_id).filter(DrsObject.description.in_(['wgs', 'wts'])).all()
         if result is not None:
             new_obj = json.loads(str(result))
             return new_obj
@@ -297,6 +296,15 @@ def delete_drs_object(obj_id, tries=1):
         logger.debug(f"Exception in delete_drs_object {obj_id}: {str(e)}, trying again")
         return delete_drs_object(obj_id, tries=tries+1)
     return None
+
+
+def get_contents_for_drs_obj(drs_obj_id):
+    with Session() as session:
+        result = session.query(ContentsObject).filter_by(drs_object_id=drs_obj_id).all()
+        if result is not None:
+            new_obj = json.loads(str(result))
+            return new_obj
+        return None
 
 
 def get_program(program_id):

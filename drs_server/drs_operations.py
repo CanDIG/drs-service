@@ -84,6 +84,25 @@ def list_objects(program_id=None, submitter_sample_id=None):
     return drs_database.list_drs_objects(program_id=program_id, submitter_sample_id=submitter_sample_id), 200
 
 
+async def list_experiments():
+    if not authz.has_full_authz(connexion.request):
+        return {"message": f"Not authorized to list all objects"}, 403
+    req = await connexion.request.json()
+    result = []
+
+    if "submitter_sample_ids" in req:
+        objects = []
+        sample_ids = req["submitter_sample_ids"]
+        for submitter_sample_id in sample_ids:
+            objects.extend(drs_database.list_drs_objects(submitter_sample_id=submitter_sample_id))
+    else:
+        objects = drs_database.list_drs_objects()
+    for object in objects:
+        if _is_experiment_object(object):
+            result.append(_format_experiment(object))
+    return result, 200
+
+
 @app.route('/ga4gh/drs/v1/objects/<object_id>/access_url/<path:access_id>')
 def get_access_url(object_id, access_id, request=connexion.request):
     if object_id is not None:
@@ -210,8 +229,9 @@ def get_program_status(program_id):
         "index_in_progress": [],
         "index_errored": []
     }
-    for drs_uri in new_program['drsobjects']:
-        drs_obj, status_code = get_object_for_drs_uri(drs_uri)
+    drs_objects = drs_database.list_drs_objects(program_id=program_id)
+    for drs_obj in drs_objects:
+        drs_uri = drs_obj["self_uri"]
         if "metadata" in drs_obj:
             if "indexed" in drs_obj["metadata"]:
                 if drs_obj["metadata"]['indexed'] == 1:
@@ -303,3 +323,56 @@ def _get_access_url(access_id):
         return url, 500
     else:
         return {"message": f"Malformed access_id {access_id}: should be in the form endpoint/bucket/item", "method": "_get_access_url"}, 400
+
+
+def _is_experiment_object(drs_object):
+    if "access_methods" not in drs_object:
+        if drs_object["description"] in ["wgs", "wts"]:
+            return True
+    return False
+
+
+def _is_analysis_object(drs_object):
+    # This is the bundling object; it has contents referring to the files and experiments. Its unique characteristic is that it has a reference_genome.
+    if "access_methods" not in drs_object:
+        if "reference_genome" in drs_object:
+            return True
+    return False
+
+
+def _is_file_object(drs_object):
+    # File objects have access methods.
+    if "access_methods" in drs_object:
+        return True
+    return False
+
+
+def _format_experiment(experiment_drs_obj):
+    result = {
+        "experiment_id": experiment_drs_obj["name"],
+        "program": experiment_drs_obj["program"],
+        "genomes": [],
+        "transcriptomes": [],
+        "variants": [],
+        "reads": [],
+        "expressions": []
+    }
+
+    if _is_experiment_object(experiment_drs_obj):
+        if experiment_drs_obj["description"] == "wgs":
+            result["genomes"].append(experiment_drs_obj["id"])
+        elif experiment_drs_obj["description"] == "wts":
+            result["transcriptomes"].append(experiment_drs_obj["id"])
+        analysis_contents = drs_database.get_contents_for_drs_obj(experiment_drs_obj["id"])
+        if len(analysis_contents) > 0:
+            for analysis in analysis_contents:
+                # get the analysis object
+                analysis_obj = drs_database.get_drs_object(analysis["id"])
+                if analysis_obj["description"] == "sequence_variation":
+                    result["variants"].append(analysis_obj["name"])
+                elif analysis_obj["description"] == "reference_alignment":
+                    result["reads"].append(analysis_obj["name"])
+                elif analysis_obj["description"] == "sequence_annotation":
+                    result["expressions"].append(analysis_obj["name"])
+        return result
+    return None
