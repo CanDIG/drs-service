@@ -91,16 +91,10 @@ async def list_experiments():
     result = []
 
     if "submitter_sample_ids" in req:
-        objects = []
-        sample_ids = req["submitter_sample_ids"]
-        for submitter_sample_id in sample_ids:
-            objects.extend(drs_database.list_drs_objects(submitter_sample_id=submitter_sample_id))
+        experiments = drs_database.list_experiments(submitter_sample_ids=req["submitter_sample_ids"])
     else:
-        objects = drs_database.list_drs_objects()
-    for object in objects:
-        if _is_experiment_object(object):
-            result.append(_format_experiment(object))
-    return result, 200
+        experiments = drs_database.list_experiments()
+    return experiments, 200
 
 
 @app.route('/ga4gh/drs/v1/objects/<object_id>/access_url/<path:access_id>')
@@ -345,34 +339,3 @@ def _is_file_object(drs_object):
     if "access_methods" in drs_object:
         return True
     return False
-
-
-def _format_experiment(experiment_drs_obj):
-    result = {
-        "experiment_id": experiment_drs_obj["name"],
-        "program": experiment_drs_obj["program"],
-        "genomes": [],
-        "transcriptomes": [],
-        "variants": [],
-        "reads": [],
-        "expressions": []
-    }
-
-    if _is_experiment_object(experiment_drs_obj):
-        if experiment_drs_obj["description"] == "wgs":
-            result["genomes"].append(experiment_drs_obj["id"])
-        elif experiment_drs_obj["description"] == "wts":
-            result["transcriptomes"].append(experiment_drs_obj["id"])
-        analysis_contents = drs_database.get_contents_for_drs_obj(experiment_drs_obj["id"])
-        if len(analysis_contents) > 0:
-            for analysis in analysis_contents:
-                # get the analysis object
-                analysis_obj = drs_database.get_drs_object(analysis["id"])
-                if analysis_obj["description"] == "sequence_variation":
-                    result["variants"].append(analysis_obj["name"])
-                elif analysis_obj["description"] == "reference_alignment":
-                    result["reads"].append(analysis_obj["name"])
-                elif analysis_obj["description"] == "sequence_annotation":
-                    result["expressions"].append(analysis_obj["name"])
-        return result
-    return None
