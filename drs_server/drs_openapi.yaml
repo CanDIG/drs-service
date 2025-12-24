@@ -324,6 +324,10 @@ components:
           schema:
             type: object
             properties:
+              program_ids:
+                type: array
+                items:
+                  type: string
               submitter_sample_ids:
                 type: array
                 items:

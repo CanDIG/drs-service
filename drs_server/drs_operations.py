@@ -89,11 +89,13 @@ async def list_experiments():
         return {"message": f"Not authorized to list all objects"}, 403
     req = await connexion.request.json()
     result = []
-
+    submitter_sample_ids = None
+    program_ids = None
     if "submitter_sample_ids" in req:
-        experiments = drs_database.list_experiments(submitter_sample_ids=req["submitter_sample_ids"])
-    else:
-        experiments = drs_database.list_experiments()
+        submitter_sample_ids = req["submitter_sample_ids"]
+    if "program_ids" in req:
+        program_ids = req["program_ids"]
+    experiments = drs_database.list_experiments(program_ids=program_ids, submitter_sample_ids=submitter_sample_ids)
     return experiments, 200
 
 

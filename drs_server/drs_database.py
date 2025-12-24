@@ -370,7 +370,7 @@ def delete_program(program_id, tries=1):
     return None
 
 
-def list_experiments(program_id=None, submitter_sample_ids=None):
+def list_experiments(program_ids=None, submitter_sample_ids=None):
     experiment_obj = aliased(DrsObject)
     analysis_obj = aliased(DrsObject)
     stmt = select(experiment_obj.name, experiment_obj.id, experiment_obj.program_id, experiment_obj.description, analysis_obj.name, analysis_obj.description, ContentsObject)
@@ -378,8 +378,8 @@ def list_experiments(program_id=None, submitter_sample_ids=None):
     stmt = stmt.join(analysis_obj, ContentsObject.contents_id == analysis_obj.name)
     stmt = stmt.filter(experiment_obj.description.in_(['wgs', 'wts']))
 
-    if program_id is not None:
-        stmt = stmt.filter(experiment_obj.program_id == program_id)
+    if program_ids is not None:
+        stmt = stmt.filter(experiment_obj.program_id.in_(program_ids))
     if submitter_sample_ids is not None:
         stmt = stmt.filter(experiment_obj.name.in_(submitter_sample_ids))
     with Session() as session:
