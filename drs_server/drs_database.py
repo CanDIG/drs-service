@@ -298,15 +298,6 @@ def delete_drs_object(obj_id, tries=1):
     return None
 
 
-def get_contents_for_drs_obj(drs_obj_id):
-    with Session() as session:
-        result = session.query(ContentsObject).filter_by(drs_object_id=drs_obj_id).all()
-        if result is not None:
-            new_obj = json.loads(str(result))
-            return new_obj
-        return None
-
-
 def get_program(program_id):
     with Session() as session:
         result = session.query(Program).filter_by(id=program_id).one_or_none()
@@ -379,3 +370,42 @@ def delete_program(program_id, tries=1):
     return None
 
 
+def list_experiments(program_ids=None, submitter_sample_ids=None):
+    experiment_obj = aliased(DrsObject)
+    analysis_obj = aliased(DrsObject)
+    stmt = select(experiment_obj.name, experiment_obj.id, experiment_obj.program_id, experiment_obj.description, analysis_obj.name, analysis_obj.description, ContentsObject)
+    stmt = stmt.join(experiment_obj, ContentsObject.drs_object_id == experiment_obj.id)
+    stmt = stmt.join(analysis_obj, ContentsObject.contents_id == analysis_obj.name)
+    stmt = stmt.filter(experiment_obj.description.in_(['wgs', 'wts']))
+
+    if program_ids is not None:
+        stmt = stmt.filter(experiment_obj.program_id.in_(program_ids))
+    if submitter_sample_ids is not None:
+        stmt = stmt.filter(experiment_obj.name.in_(submitter_sample_ids))
+    with Session() as session:
+        results_dict = {}
+        for row in session.execute(stmt):
+            result = row._mapping
+            if result["name"] not in results_dict:
+                results_dict[result["name"]] = {
+                    "experiment_id": result["name"],
+                    "program": result["program_id"],
+                    "genomes": [],
+                    "transcriptomes": [],
+                    "variants": [],
+                    "reads": [],
+                    "expressions": []
+                }
+            this_result = results_dict[result["name"]]
+            if result["description"] == "wgs" and result["id"] not in this_result["genomes"]:
+                results_dict[result["name"]]["genomes"].append(result["id"])
+            elif result["description"] == "wts" and result["id"] not in this_result["transcriptomes"]:
+                results_dict[result["name"]]["transcriptomes"].append(result["id"])
+            if result["description_1"] == "sequence_variation" and result["name_1"] not in this_result["variants"]:
+                results_dict[result["name"]]["variants"].append(result["name_1"])
+            elif result["description_1"] == "reference_alignment" and result["name_1"] not in this_result["reads"]:
+                results_dict[result["name"]]["reads"].append(result["name_1"])
+            elif result["description_1"] == "sequence_annotation" and result["name_1"] not in this_result["expressions"]:
+                results_dict[result["name"]]["expressions"].append(result["name_1"])
+        return list(results_dict.values())
+    return None
