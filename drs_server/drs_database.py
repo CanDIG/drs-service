@@ -298,15 +298,6 @@ def delete_drs_object(obj_id, tries=1):
     return None
 
 
-def get_contents_for_drs_obj(drs_obj_id):
-    with Session() as session:
-        result = session.query(ContentsObject).filter_by(drs_object_id=drs_obj_id).all()
-        if result is not None:
-            new_obj = json.loads(str(result))
-            return new_obj
-        return None
-
-
 def get_program(program_id):
     with Session() as session:
         result = session.query(Program).filter_by(id=program_id).one_or_none()
