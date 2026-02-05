@@ -461,7 +461,8 @@ components:
           type: array
           description: The specific analysis contents objects that were generated from this experiment.
           items:
-            $ref: '#/components/schemas/AnalysisContentsObject'
+            oneOf:
+            - $ref: '#/components/schemas/ContentsObject'
         description:
           type: string
           description: the library strategy used in this experiment
@@ -509,8 +510,7 @@ components:
           minItems: 1
           items:
             anyOf:
-              - $ref: '#/components/schemas/AnalysisDataContentsObject'
-              - $ref: '#/components/schemas/ExperimentContentsObject'
+              - $ref: '#/components/schemas/ContentsObject'
         description:
           type: string
           description: type of sequencing analysis
@@ -824,58 +824,20 @@ components:
       anyOf:
         - $ref: '#/components/schemas/AccessUrlMethod'
         - $ref: '#/components/schemas/AccessIdMethod'
-    AnalysisContentsObject:
+    ContentsObject:
       type: object
       required:
         - name
-        - id
+        - drs_uri
       properties:
         name:
           type: string
-          description: The identifier of the analysis object
+          description: The identifier of the linked DRS object
         id:
           type: string
-          description: The identifier of the analysis object
+          description: The identifier of the linked DRS object
         drs_uri:
           type: array
-          description: The DRS uri(s) to the AnalysisDrsObject
-          items:
-            type: string
-    ExperimentContentsObject:
-      type: object
-      required:
-        - name
-        - id
-      properties:
-        name:
-          type: string
-          description: The submitter_sample_id of the experiment in the MoH model
-        id:
-          type: string
-          description: The id of the ExperimentDrsObject
-        drs_uri:
-          type: array
-          description: The DRS uri(s) to the ExperimentDrsObject
-          items:
-            type: string
-    AnalysisDataContentsObject:
-      type: object
-      required:
-        - name
-        - id
-      properties:
-        name:
-          type: string
-          description: The full filename of the analysis data file, including extensions.
-        id:
-          type: string
-          enum:
-            - variant
-            - read
-            - transcript
-            - index
-        drs_uri:
-          type: array
-          description: The DRS uri(s) to the AnalysisDataDrsObject
+          description: The DRS uri(s) to the linked DrsObject
           items:
             type: string
