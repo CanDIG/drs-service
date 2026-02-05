@@ -410,10 +410,6 @@ components:
         - contents
         - description
         - program
-#        - self_uri
-#        - size
-#        - created_time
-#        - checksums
       properties:
         name:
           type: string
@@ -491,10 +487,6 @@ components:
         - description
         - program
         - reference_genome
-#        - self_uri
-#        - size
-#        - created_time
-#        - checksums
       properties:
         id:
           type: string
