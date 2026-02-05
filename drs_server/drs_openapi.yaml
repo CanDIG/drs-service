@@ -521,12 +521,11 @@ components:
           description: same as the id
         contents:
           type: array
-          description: The specific analysis contents objects that comprise this analysis DRS entity. Should contain a AnalysisDataContentsObject, an optional AnalysisIndexContentsObject, and ExperimentContentsObjects corresponding to the experiments analyzed in the analysis data object.
+          description: The specific analysis contents objects that comprise this analysis DRS entity. Should contain one or more AnalysisDataContentsObjects that describe the files in the analysis, and ExperimentContentsObjects corresponding to the experiments analyzed in the analysis data object.
           minItems: 1
           items:
             anyOf:
               - $ref: '#/components/schemas/AnalysisDataContentsObject'
-              - $ref: '#/components/schemas/AnalysisIndexContentsObject'
               - $ref: '#/components/schemas/ExperimentContentsObject'
         description:
           type: string
@@ -910,26 +909,9 @@ components:
             - variant
             - read
             - transcript
-        drs_uri:
-          type: array
-          description: The DRS uri(s) to the AnalysisDataDrsObject
-          items:
-            type: string
-    AnalysisIndexContentsObject:
-      type: object
-      required:
-        - name
-        - id
-      properties:
-        name:
-          type: string
-          description: The full filename of the index file, including extensions.
-        id:
-          type: string
-          enum:
             - index
         drs_uri:
           type: array
-          description: The DRS uri(s) to the AnalysisIndexDrsObject
+          description: The DRS uri(s) to the AnalysisDataDrsObject
           items:
             type: string
