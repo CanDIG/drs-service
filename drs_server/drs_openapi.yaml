@@ -457,22 +457,6 @@ components:
           # minItems: 1
           items:
             $ref: '#/components/schemas/Checksum'
-          description: >-
-            The checksum of the `DrsObject`. At least one checksum must be provided.
-            For blobs, the checksum is computed over the bytes in the blob.
-            For bundles, the checksum is computed over a sorted concatenation of the
-            checksums of its top-level contained objects (not recursive, names not included).
-            The list of checksums is sorted alphabetically (hex-code) before concatenation
-            and a further checksum is performed on the concatenated checksum value.
-            For example, if a bundle contains blobs with the following checksums:
-            md5(blob1) = 72794b6d
-            md5(blob2) = 5e089d29
-            Then the checksum of the bundle is:
-            md5( concat( sort( md5(blob1), md5(blob2) ) ) )
-            = md5( concat( sort( 72794b6d, 5e089d29 ) ) )
-            = md5( concat( 5e089d29, 72794b6d ) )
-            = md5( 5e089d2972794b6d )
-            = f7a29a04
         contents:
           type: array
           description: The specific analysis contents objects that were generated from this experiment.
@@ -585,22 +569,6 @@ components:
           # minItems: 1
           items:
             $ref: '#/components/schemas/Checksum'
-          description: >-
-            The checksum of the `DrsObject`. At least one checksum must be provided.
-            For blobs, the checksum is computed over the bytes in the blob.
-            For bundles, the checksum is computed over a sorted concatenation of the
-            checksums of its top-level contained objects (not recursive, names not included).
-            The list of checksums is sorted alphabetically (hex-code) before concatenation
-            and a further checksum is performed on the concatenated checksum value.
-            For example, if a bundle contains blobs with the following checksums:
-            md5(blob1) = 72794b6d
-            md5(blob2) = 5e089d29
-            Then the checksum of the bundle is:
-            md5( concat( sort( md5(blob1), md5(blob2) ) ) )
-            = md5( concat( sort( 72794b6d, 5e089d29 ) ) )
-            = md5( concat( 5e089d29, 72794b6d ) )
-            = md5( 5e089d2972794b6d )
-            = f7a29a04
         metadata:
           type: object
           description: metadata about the analysis (see Analysis in ingest_openapi.yaml)
@@ -707,10 +675,6 @@ components:
         - access_methods
         - description
         - program
-#        - self_uri
-#        - size
-#        - created_time
-#        - checksums
       properties:
         id:
           type: string
