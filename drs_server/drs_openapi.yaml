@@ -496,7 +496,7 @@ components:
           description: same as name
         contents:
           type: array
-          description: The specific analysis contents objects that comprise this analysis DRS entity. Should contain one or more AnalysisDataContentsObjects that describe the files in the analysis, and ExperimentContentsObjects corresponding to the experiments analyzed in the analysis data object.
+          description: The specific analysis contents objects that comprise this analysis DRS entity. Should contain one or more ContentsObjects that describe the data files in the analysis, and one or more ContentsObjects corresponding to the experiments analyzed in the analysis.
           minItems: 1
           items:
             $ref: '#/components/schemas/ContentsObject'
