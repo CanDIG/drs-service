@@ -405,8 +405,8 @@ components:
       type: object
       description: A DrsObject that describes the sequencing experiment.
       required:
-        - id
         - name
+        - id
         - contents
         - description
         - program
@@ -417,6 +417,32 @@ components:
         id:
           type: string
           description: The alias for the experiment, as defined by the sequencing center
+        contents:
+          type: array
+          description: The specific analysis contents objects that were generated from this experiment.
+          items:
+            $ref: '#/components/schemas/ContentsObject'
+        description:
+          type: string
+          description: the library strategy used in this experiment
+          enum:
+            - wgs
+            - wts
+        program:
+          type: string
+          description: The program this object was ingested as part of
+        metadata:
+          type: object
+          description: metadata about the experiment (see Experiment in ingest_openapi.yaml)
+        aliases:
+          type: array
+          items:
+            type: string
+          description: >-
+            A list of strings that can be used to find other metadata
+            about this `DrsObject` from external metadata sources. These
+            aliases can be used to represent secondary
+            accession numbers or external GUIDs.
         self_uri:
           type: string
           description: |-
@@ -451,59 +477,36 @@ components:
           # minItems: 1
           items:
             $ref: '#/components/schemas/Checksum'
-        contents:
-          type: array
-          description: The specific analysis contents objects that were generated from this experiment.
-          items:
-            oneOf:
-            - $ref: '#/components/schemas/ContentsObject'
-        description:
-          type: string
-          description: the library strategy used in this experiment
-          enum:
-            - wgs
-            - wts
-        program:
-          type: string
-          description: The program this object was ingested as part of
-        aliases:
-          type: array
-          items:
-            type: string
-          description: >-
-            A list of strings that can be used to find other metadata
-            about this `DrsObject` from external metadata sources. These
-            aliases can be used to represent secondary
-            accession numbers or external GUIDs.
-        metadata:
-          type: object
-          description: metadata about the experiment (see Experiment in ingest_openapi.yaml)
     AnalysisDrsObject:
       type: object
       description: A DrsObject that describes a sequencing analysis. It usually will consist of a data file, e.g. a variant or read file, and its associated index file. Its contents should also include any associated Experiments (as ExperimentContentObjects), ordered in order of appearance in the associated variant/read files.
       required:
+        - name
         - id
         - contents
         - description
         - program
         - reference_genome
       properties:
-        id:
-          type: string
-          description: The descriptor for this analysis data entity
         name:
           type: string
-          description: same as the id
+          description: The unique ID for this analysis
+        id:
+          type: string
+          description: same as name
         contents:
           type: array
           description: The specific analysis contents objects that comprise this analysis DRS entity. Should contain one or more AnalysisDataContentsObjects that describe the files in the analysis, and ExperimentContentsObjects corresponding to the experiments analyzed in the analysis data object.
           minItems: 1
           items:
-            anyOf:
-              - $ref: '#/components/schemas/ContentsObject'
+            $ref: '#/components/schemas/ContentsObject'
         description:
           type: string
           description: type of sequencing analysis
+          enum:
+            - reference_alignment
+            - sequence_variation
+            - sequence_annotation
         program:
           type: string
           description: The program this object was ingested as part of
@@ -566,10 +569,14 @@ components:
       type: object
       description: A DrsObject that describes a data file, e.g. a variant or read file.
       required:
+        - name
         - id
         - access_methods
         - program
       properties:
+        name:
+          type: string
+          description: Unique ID for this data object
         id:
           type: string
           description: The filename for this data file, including its file extensions.
@@ -652,6 +659,7 @@ components:
       type: object
       required:
         - name
+        - id
         - drs_uri
       properties:
         name:
@@ -659,7 +667,7 @@ components:
           description: The identifier of the linked DRS object
         id:
           type: string
-          description: The identifier of the linked DRS object
+          description: Alternate identifier for the linked DRS object
         drs_uri:
           type: array
           description: The DRS uri(s) to the linked DrsObject
