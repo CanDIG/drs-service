@@ -390,13 +390,15 @@ def list_biosamples(program_ids=None, submitter_sample_ids=None):
                 results_dict[result["name"]] = {
                     "biosample_id": result["name"],
                     "program": result["program_id"],
-                    "experiments": [],
+                    "experiments": {
+                        "wgs": [],
+                        "wts": []
+                    },
                     "runs": [],
                     "analyses": {}
                 }
-            this_result = results_dict[result["name"]]
-            if result["description"] in ["wgs", "wts"] and result["id"] not in this_result["experiments"]:
-                results_dict[result["name"]]["experiments"].append(result["id"])
+            if result["description"] in ["wgs", "wts"] and result["id"] not in results_dict[result["name"]]["experiments"]:
+                results_dict[result["name"]]["experiments"][result["description"]].append(result["id"])
             if result["description_1"] == "raw_reads":
                 results_dict[result["name"]]["runs"].append(result["name_1"])
             else:

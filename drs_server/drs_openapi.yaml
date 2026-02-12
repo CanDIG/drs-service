@@ -382,10 +382,17 @@ components:
           type: string
           description: MoH program ID
         experiments:
-          type: array
-          description: An array of associated ExperimentDrsObjects derived from the biosample.
-          items:
-            type: string
+          type: object
+          description: Arrays of associated ExperimentDrsObjects derived from the biosample, keyed by type.
+          properties:
+            wgs:
+              type: array
+              items:
+                type: string
+            wts:
+              type: array
+              items:
+                type: string
         runs:
           type: array
           description: An array of associated RunDrsObjects that describe raw reads derived from biosample.
