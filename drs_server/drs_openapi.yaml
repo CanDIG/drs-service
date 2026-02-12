@@ -139,14 +139,14 @@ paths:
                     description: array of strings that need to be passed with the URL to get bytes
       tags:
         - Objects
-  /experiments:
+  /biosamples:
     parameters:
      - $ref: '#/components/parameters/BearerAuth'
     post:
       summary: List all DRS Experiment objects matching an array of submitter_sample_ids. Only authorized for site admins and authzed services.
-      operationId: drs_operations.list_experiments
+      operationId: drs_operations.list_biosamples
       requestBody:
-        $ref: '#/components/requestBodies/ExperimentsRequest'
+        $ref: '#/components/requestBodies/BiosamplesRequest'
       responses:
         200:
           description: The `DrsObjects` were found successfully
@@ -156,7 +156,7 @@ paths:
                 type: array
                 items:
                   anyOf:
-                    - $ref: '#/components/schemas/ExperimentTicket'
+                    - $ref: '#/components/schemas/BiosampleTicket'
       tags:
         - Objects
   /programs:
@@ -314,7 +314,7 @@ components:
         'application/json':
           schema:
             $ref: '#/components/schemas/Program'
-    ExperimentsRequest:
+    BiosamplesRequest:
       description: list of submitter sample ids requested
       required: false
       content:
@@ -372,35 +372,41 @@ components:
     DrsUri:
       type: string
       description: a DRS object's self_uri
-    ExperimentTicket:
+    BiosampleTicket:
       type: object
       properties:
-          experiment_id:
-              type: string
-              description: MoH submitter_sample_id from a Sample Registration associated with a specimen.
-          program:
-              type: string
-              description: MoH program ID
-          genomes:
+        biosample_id:
+          type: string
+          description: MoH submitter_sample_id from a Sample Registration associated with a specimen.
+        program:
+          type: string
+          description: MoH program ID
+        experiments:
+          type: array
+          description: An array of associated ExperimentDrsObjects derived from the biosample.
+          items:
+            type: string
+        runs:
+          type: array
+          description: An array of associated RunDrsObjects that describe raw reads derived from biosample.
+          items:
+            type: string
+        analyses:
+          type: object
+          description: Arrays of associated AnalysisDrsObjects based on the biosample, keyed by analysis type.
+          properties:
+            reference_alignment:
               type: array
-              description: An array of associated AnalysisDrsObjects that describe reads, e.g. fastqs.
               items:
-                  type: string
-          transcriptomes:
+                type: string
+            sequence_variation:
               type: array
-              description: An array of associated AnalysisDrsObjects that describe transcriptome data.
               items:
-                  type: string
-          variants:
+                type: string
+            sequence_annotation:
               type: array
-              description: An array of associated DataDrsObjects that describe variant files.
               items:
-                  type: string
-          reads:
-              type: array
-              description: An array of associated DataDrsObjects that describe read files, e.g. bams.
-              items:
-                  type: string
+                type: string
     ExperimentDrsObject:
       type: object
       description: A DrsObject that describes the sequencing experiment.
@@ -413,10 +419,10 @@ components:
       properties:
         name:
           type: string
-          description: The specimen identifier for the experiment, as defined in sample_registration in the MOHCCN data model.
+          description: The biosample identifier for the experiment.
         id:
           type: string
-          description: The alias for the experiment, as defined by the sequencing center
+          description: A unique ID for the experiment. Often the alias for the experiment, as defined by the sequencing center
         contents:
           type: array
           description: The specific analysis contents objects that were generated from this experiment.
@@ -479,7 +485,7 @@ components:
             $ref: '#/components/schemas/Checksum'
     AnalysisDrsObject:
       type: object
-      description: A DrsObject that describes a sequencing analysis. It usually will consist of a data file, e.g. a variant or read file, and its associated index file. Its contents should also include any associated Experiments (as ExperimentContentObjects), ordered in order of appearance in the associated variant/read files.
+      description: A DrsObject that describes a sequencing analysis. It usually will consist of a data file, e.g. a variant or read file, and its associated index file. Its contents should also include any associated Experiments (as ContentObjects), ordered in order of appearance in the associated variant/read files.
       required:
         - name
         - id

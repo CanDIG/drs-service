@@ -84,7 +84,7 @@ def list_objects(program_id=None, submitter_sample_id=None):
     return drs_database.list_drs_objects(program_id=program_id, submitter_sample_id=submitter_sample_id), 200
 
 
-async def list_experiments():
+async def list_biosamples():
     if not authz.has_full_authz(connexion.request):
         return {"message": f"Not authorized to list all objects"}, 403
     req = await connexion.request.json()
@@ -95,8 +95,8 @@ async def list_experiments():
         submitter_sample_ids = req["submitter_sample_ids"]
     if "program_ids" in req:
         program_ids = req["program_ids"]
-    experiments = drs_database.list_experiments(program_ids=program_ids, submitter_sample_ids=submitter_sample_ids)
-    return experiments, 200
+    biosamples = drs_database.list_biosamples(program_ids=program_ids, submitter_sample_ids=submitter_sample_ids)
+    return biosamples, 200
 
 
 @app.route('/ga4gh/drs/v1/objects/<object_id>/access_url/<path:access_id>')
