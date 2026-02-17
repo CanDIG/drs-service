@@ -378,7 +378,7 @@ components:
         biosample_id:
           type: string
           description: MoH submitter_sample_id from a Sample Registration associated with a specimen.
-        program:
+        program_id:
           type: string
           description: MoH program ID
         experiments:
