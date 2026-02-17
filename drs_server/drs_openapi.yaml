@@ -383,7 +383,7 @@ components:
           description: MoH program ID
         experiments:
           type: object
-          description: Arrays of associated experiments derived from the biosample, keyed by type.
+          description: Arrays of associated experiment IDs derived from the biosample, keyed by type.
           properties:
             wgs:
               type: array
@@ -395,7 +395,7 @@ components:
                 type: string
         runs:
           type: array
-          description: An array of associated runs that describe raw reads derived from biosample.
+          description: An array of associated run IDs that describe raw reads derived from biosample.
           items:
             type: string
         analyses:
