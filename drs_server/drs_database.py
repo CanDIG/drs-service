@@ -389,7 +389,7 @@ def list_biosamples(program_ids=None, submitter_sample_ids=None):
             if result["name"] not in results_dict:
                 results_dict[result["name"]] = {
                     "biosample_id": result["name"],
-                    "program_id": result["program_id"],
+                    "program": result["program_id"],
                     "experiments": {
                         "wgs": [],
                         "wts": []
