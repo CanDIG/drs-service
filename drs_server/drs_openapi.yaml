@@ -46,6 +46,7 @@ paths:
                 items:
                   anyOf:
                     - $ref: '#/components/schemas/ExperimentDrsObject'
+                    - $ref: '#/components/schemas/RunDrsObject'
                     - $ref: '#/components/schemas/AnalysisDrsObject'
                     - $ref: '#/components/schemas/DataDrsObject'
       tags:
@@ -92,7 +93,10 @@ paths:
             application/json:
               schema:
                 oneOf:
+                  - $ref: '#/components/schemas/ExperimentDrsObject'
+                  - $ref: '#/components/schemas/RunDrsObject'
                   - $ref: '#/components/schemas/AnalysisDrsObject'
+                  - $ref: '#/components/schemas/DataDrsObject'
       tags:
         - Objects
   /objects/{object_id}/download:
@@ -306,9 +310,10 @@ components:
         'application/json':
           schema:
             anyOf:
-              - $ref: "#/components/schemas/ExperimentDrsObject"
-              - $ref: "#/components/schemas/AnalysisDrsObject"
-              - $ref: "#/components/schemas/DataDrsObject"
+              - $ref: '#/components/schemas/ExperimentDrsObject'
+              - $ref: '#/components/schemas/RunDrsObject'
+              - $ref: '#/components/schemas/AnalysisDrsObject'
+              - $ref: '#/components/schemas/DataDrsObject'
     ProgramRequest:
       content:
         'application/json':
@@ -490,6 +495,81 @@ components:
           # minItems: 1
           items:
             $ref: '#/components/schemas/Checksum'
+    RunDrsObject:
+      type: object
+      description: A DrsObject that describes the raw read files.
+      required:
+        - name
+        - id
+        - contents
+        - description
+        - program
+      properties:
+        name:
+          type: string
+          description: The experiment's name that this run is generated from.
+        id:
+          type: string
+          description: The unique ID for the run.
+        contents:
+          type: array
+          description: The specific raw FASTQ files that were generated in this Run.
+          items:
+            $ref: '#/components/schemas/ContentsObject'
+        description:
+          type: string
+          description: For a Run object, the description should be `raw_reads`
+          enum:
+            - raw_reads
+        program:
+          type: string
+          description: The program this object was ingested as part of
+        self_uri:
+          type: string
+          description: |-
+            A drs:// hostname-based URI, as defined in the DRS documentation, that tells clients how to access this object.
+            The intent of this field is to make DRS objects self-contained, and therefore easier for clients to store and pass around.  For example, if you arrive at this DRS JSON by resolving a compact identifier-based DRS URI, the `self_uri` presents you with a hostname and properly encoded DRS ID for use in subsequent `access` endpoint calls.
+          example:
+            drs://drs.example.org/314159
+        aliases:
+          type: array
+          items:
+            type: string
+          description: >-
+            A list of strings that can be used to find other metadata
+            about this `DrsObject` from external metadata sources. These
+            aliases can be used to represent secondary
+            accession numbers or external GUIDs.
+        metadata:
+          type: object
+          description: metadata about the run (see Run in ingest_openapi.yaml)
+        size:
+          type: integer
+          format: int64
+          description: The cumulative size, in bytes, of items in the `contents` field.
+        created_time:
+          type: string
+          format: date-time
+          description: |-
+            Timestamp of content creation in RFC3339.
+            (This is the creation time of the underlying content, not of the JSON object.)
+        updated_time:
+          type: string
+          format: date-time
+          description: >-
+            Timestamp of content update in RFC3339, identical to `created_time` in systems
+            that do not support updates.
+            (This is the update time of the underlying content, not of the JSON object.)
+        version:
+          type: string
+          description: >-
+            A string representing a version.
+            (Some systems may use checksum, a RFC3339 timestamp, or an incrementing version number.)
+        checksums:
+          type: array
+          # minItems: 1
+          items:
+            $ref: '#/components/schemas/Checksum'
     AnalysisDrsObject:
       type: object
       description: A DrsObject that describes a sequencing analysis. It usually will consist of a data file, e.g. a variant or read file, and its associated index file. Its contents should also include any associated Experiments (as ContentObjects), ordered in order of appearance in the associated variant/read files.
@@ -590,7 +670,7 @@ components:
       properties:
         name:
           type: string
-          description: Unique ID for this data object
+          description: The filename for this data file, including its file extensions.
         id:
           type: string
           description: The filename for this data file, including its file extensions.
