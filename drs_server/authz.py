@@ -80,7 +80,7 @@ def has_full_authz(request):
     """
     if is_testing(request):
         return True
-    if request_is_from_ingest(request) or request_is_from_query(request) or request_is_from_htsget(request):
+    if request_is_from_ingest(request) or request_is_from_query(request) or request_is_from_htsget(request) or request_is_from_candig_api(request):
         return True
     if "Authorization" in request.headers:
         try:
@@ -113,4 +113,9 @@ def request_is_from_ingest(request):
 def request_is_from_htsget(request):
     if "X-Service-Token" in request.headers:
         return authx.auth.verify_service_token(service="htsget", token=request.headers["X-Service-Token"])
+    return False
+
+def request_is_from_candig_api(request):
+    if "X-Service-Token" in request.headers:
+        return authx.auth.verify_service_token(service="candig-api", token=request.headers["X-Service-Token"])
     return False
