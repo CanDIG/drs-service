@@ -373,7 +373,7 @@ def delete_program(program_id, tries=1):
 def list_biosamples(program_ids=None, submitter_sample_ids=None):
     experiment_obj = aliased(DrsObject)
     related_obj = aliased(DrsObject)
-    stmt = select(experiment_obj.name, experiment_obj.id, experiment_obj.program_id, experiment_obj.description, related_obj.id, related_obj.description, ContentsObject)
+    stmt = select(experiment_obj.name, experiment_obj.id, experiment_obj.program_id, experiment_obj.description, related_obj.id, related_obj.description, related_obj.meta_data, ContentsObject)
     stmt = stmt.join(experiment_obj, ContentsObject.drs_object_id == experiment_obj.id)
     stmt = stmt.join(related_obj, ContentsObject.contents_id == related_obj.id)
     stmt = stmt.filter(experiment_obj.description.in_(['wgs', 'wts']))
@@ -402,8 +402,9 @@ def list_biosamples(program_ids=None, submitter_sample_ids=None):
             if result["description_1"] == "raw_reads":
                 results_dict[result["name"]]["runs"].append(result["id_1"])
             else:
-                if result["description_1"] not in results_dict[result["name"]]["analyses"]:
-                    results_dict[result["name"]]["analyses"][result["description_1"]] = []
-                results_dict[result["name"]]["analyses"][result["description_1"]].append(result["id_1"])
+                if "verified" in result["meta_data"] and result["meta_data"]["verified"] == 1:
+                    if result["description_1"] not in results_dict[result["name"]]["analyses"]:
+                        results_dict[result["name"]]["analyses"][result["description_1"]] = []
+                    results_dict[result["name"]]["analyses"][result["description_1"]].append(result["id_1"])
         return list(results_dict.values())
     return None
