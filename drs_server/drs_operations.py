@@ -84,7 +84,7 @@ def list_objects(program_id=None, submitter_sample_id=None):
     return drs_database.list_drs_objects(program_id=program_id, submitter_sample_id=submitter_sample_id), 200
 
 
-async def list_biosamples():
+async def list_biosamples(verified_only=False):
     if not authz.has_full_authz(connexion.request):
         return {"message": f"Not authorized to list all objects"}, 403
     req = await connexion.request.json()
@@ -95,7 +95,7 @@ async def list_biosamples():
         submitter_sample_ids = req["submitter_sample_ids"]
     if "program_ids" in req:
         program_ids = req["program_ids"]
-    biosamples = drs_database.list_biosamples(program_ids=program_ids, submitter_sample_ids=submitter_sample_ids)
+    biosamples = drs_database.list_biosamples(program_ids=program_ids, submitter_sample_ids=submitter_sample_ids, verified_only=verified_only)
     return biosamples, 200
 
 
