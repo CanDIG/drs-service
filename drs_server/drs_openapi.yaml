@@ -146,6 +146,7 @@ paths:
   /biosamples:
     parameters:
      - $ref: '#/components/parameters/BearerAuth'
+     - $ref: '#/components/parameters/VerifiedQuery'
     post:
       summary: List all DRS Experiment objects matching an array of submitter_sample_ids. Only authorized for site admins and authzed services.
       operationId: drs_operations.list_biosamples
@@ -253,6 +254,12 @@ components:
         description: ProgramId
         schema:
           type: string
+    VerifiedQuery:
+        in: query
+        name: verified_only
+        description: Only return analyses with verified files
+        schema:
+          type: boolean
     SampleRegistrationQuery:
         in: query
         name: submitter_sample_id
