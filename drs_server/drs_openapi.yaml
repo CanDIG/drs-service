@@ -52,7 +52,7 @@ paths:
       tags:
         - Objects
     post:
-        summary: Add a DrsObject to the db
+        summary: Add a DrsObject
         operationId: drs_operations.post_object
         requestBody:
             $ref: '#/components/requestBodies/DrsObjectRequest'
@@ -68,7 +68,7 @@ paths:
         - $ref: '#/components/parameters/ObjectId'
         - $ref: '#/components/parameters/BearerAuth'
     delete:
-      summary: Delete a DrsObject.
+      summary: Delete a DrsObject
       description: >-
         Returns object metadata, and a list of access methods that can be used to fetch object bytes.
       operationId: drs_operations.delete_object
@@ -80,7 +80,7 @@ paths:
                 schema:
                   type: object
     get:
-      summary: Get info about a DrsObject.
+      summary: Get info about a DrsObject
       description: >-
         Returns object metadata, and a list of access methods that can be used to fetch object bytes.
       operationId: drs_operations.get_object
@@ -148,7 +148,8 @@ paths:
      - $ref: '#/components/parameters/BearerAuth'
      - $ref: '#/components/parameters/VerifiedQuery'
     post:
-      summary: List all DRS Experiment objects matching an array of submitter_sample_ids. Only authorized for site admins and authzed services.
+      summary: List all DRS objects related to a biosample.
+      description: List all DRS objects matching an array of submitter_sample_ids. Only authorized for site admins and authzed services.
       operationId: drs_operations.list_biosamples
       requestBody:
         $ref: '#/components/requestBodies/BiosamplesRequest'
@@ -168,6 +169,7 @@ paths:
     parameters:
       - $ref: '#/components/parameters/BearerAuth'
     get:
+      summary: List all programs
       description: List all programs available
       operationId: drs_operations.list_programs
       responses:
@@ -181,6 +183,7 @@ paths:
                   type: string
                 description: array of programs
     post:
+      summary: Create a program
       description: Create a program
       operationId: drs_operations.post_program
       requestBody:
@@ -198,6 +201,7 @@ paths:
       - $ref: "#/components/parameters/ProgramId"
       - $ref: '#/components/parameters/BearerAuth'
     get:
+      summary: Describe a program
       description: Describe a program
       operationId: drs_operations.get_program
       responses:
@@ -224,7 +228,8 @@ paths:
       - $ref: "#/components/parameters/ProgramId"
       - $ref: '#/components/parameters/BearerAuth'
     get:
-      description: List indexing status reports for a program
+      description: Get the status of a program
+      description: List status reports for a program
       operationId: drs_operations.get_program_status
       responses:
         200:
