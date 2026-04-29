@@ -237,7 +237,7 @@ def get_program_status(program_id):
                 if "starting indexing" in status:
                     result['index_in_progress'].append(drs_uri)
                 else:
-                    result['index_errored'].append(err_obj)
+                    result['index_errored'].append(drs_obj)
     return result, 200
 
 
