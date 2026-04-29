@@ -228,7 +228,7 @@ paths:
       - $ref: "#/components/parameters/ProgramId"
       - $ref: '#/components/parameters/BearerAuth'
     get:
-      description: Get the status of a program
+      summary: Get the status of a program
       description: List status reports for a program
       operationId: drs_operations.get_program_status
       responses:
