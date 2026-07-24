@@ -7,7 +7,7 @@ info:
     name: Apache 2.0
     url: 'https://raw.githubusercontent.com/ga4gh/data-repository-service-schemas/master/LICENSE'
 servers:
-  - url: /ga4gh/drs/v1
+  - url: https://your-candig-domain/drs/ga4gh/drs/v1
 security:
   - {}
   - BasicAuth: []
@@ -46,13 +46,13 @@ paths:
                 items:
                   anyOf:
                     - $ref: '#/components/schemas/ExperimentDrsObject'
+                    - $ref: '#/components/schemas/RunDrsObject'
                     - $ref: '#/components/schemas/AnalysisDrsObject'
-                    - $ref: '#/components/schemas/AnalysisDataDrsObject'
-                    - $ref: '#/components/schemas/AnalysisIndexDrsObject'
+                    - $ref: '#/components/schemas/DataDrsObject'
       tags:
         - Objects
     post:
-        summary: Add a DrsObject to the db
+        summary: Add a DrsObject
         operationId: drs_operations.post_object
         requestBody:
             $ref: '#/components/requestBodies/DrsObjectRequest'
@@ -68,7 +68,7 @@ paths:
         - $ref: '#/components/parameters/ObjectId'
         - $ref: '#/components/parameters/BearerAuth'
     delete:
-      summary: Delete a DrsObject.
+      summary: Delete a DrsObject
       description: >-
         Returns object metadata, and a list of access methods that can be used to fetch object bytes.
       operationId: drs_operations.delete_object
@@ -80,7 +80,7 @@ paths:
                 schema:
                   type: object
     get:
-      summary: Get info about a DrsObject.
+      summary: Get info about a DrsObject
       description: >-
         Returns object metadata, and a list of access methods that can be used to fetch object bytes.
       operationId: drs_operations.get_object
@@ -93,7 +93,10 @@ paths:
             application/json:
               schema:
                 oneOf:
+                  - $ref: '#/components/schemas/ExperimentDrsObject'
+                  - $ref: '#/components/schemas/RunDrsObject'
                   - $ref: '#/components/schemas/AnalysisDrsObject'
+                  - $ref: '#/components/schemas/DataDrsObject'
       tags:
         - Objects
   /objects/{object_id}/download:
@@ -140,14 +143,16 @@ paths:
                     description: array of strings that need to be passed with the URL to get bytes
       tags:
         - Objects
-  /experiments:
+  /biosamples:
     parameters:
      - $ref: '#/components/parameters/BearerAuth'
+     - $ref: '#/components/parameters/VerifiedQuery'
     post:
-      summary: List all DRS Experiment objects matching an array of submitter_sample_ids. Only authorized for site admins and authzed services.
-      operationId: drs_operations.list_experiments
+      summary: List all DRS objects related to a biosample.
+      description: List all DRS objects matching an array of submitter_sample_ids. Only authorized for site admins and authzed services.
+      operationId: drs_operations.list_biosamples
       requestBody:
-        $ref: '#/components/requestBodies/ExperimentsRequest'
+        $ref: '#/components/requestBodies/BiosamplesRequest'
       responses:
         200:
           description: The `DrsObjects` were found successfully
@@ -157,13 +162,14 @@ paths:
                 type: array
                 items:
                   anyOf:
-                    - $ref: '#/components/schemas/ExperimentTicket'
+                    - $ref: '#/components/schemas/BiosampleTicket'
       tags:
         - Objects
   /programs:
     parameters:
       - $ref: '#/components/parameters/BearerAuth'
     get:
+      summary: List all programs
       description: List all programs available
       operationId: drs_operations.list_programs
       responses:
@@ -177,6 +183,7 @@ paths:
                   type: string
                 description: array of programs
     post:
+      summary: Create a program
       description: Create a program
       operationId: drs_operations.post_program
       requestBody:
@@ -194,6 +201,7 @@ paths:
       - $ref: "#/components/parameters/ProgramId"
       - $ref: '#/components/parameters/BearerAuth'
     get:
+      summary: Describe a program
       description: Describe a program
       operationId: drs_operations.get_program
       responses:
@@ -220,7 +228,8 @@ paths:
       - $ref: "#/components/parameters/ProgramId"
       - $ref: '#/components/parameters/BearerAuth'
     get:
-      description: List indexing status reports for a program
+      summary: Get the status of a program
+      description: List status reports for a program
       operationId: drs_operations.get_program_status
       responses:
         200:
@@ -250,6 +259,12 @@ components:
         description: ProgramId
         schema:
           type: string
+    VerifiedQuery:
+        in: query
+        name: verified_only
+        description: Only return analyses with verified files
+        schema:
+          type: boolean
     SampleRegistrationQuery:
         in: query
         name: submitter_sample_id
@@ -307,16 +322,16 @@ components:
         'application/json':
           schema:
             anyOf:
-              - $ref: "#/components/schemas/ExperimentDrsObject"
-              - $ref: "#/components/schemas/AnalysisDrsObject"
-              - $ref: "#/components/schemas/AnalysisDataDrsObject"
-              - $ref: "#/components/schemas/AnalysisIndexDrsObject"
+              - $ref: '#/components/schemas/ExperimentDrsObject'
+              - $ref: '#/components/schemas/RunDrsObject'
+              - $ref: '#/components/schemas/AnalysisDrsObject'
+              - $ref: '#/components/schemas/DataDrsObject'
     ProgramRequest:
       content:
         'application/json':
           schema:
             $ref: '#/components/schemas/Program'
-    ExperimentsRequest:
+    BiosamplesRequest:
       description: list of submitter sample ids requested
       required: false
       content:
@@ -374,55 +389,90 @@ components:
     DrsUri:
       type: string
       description: a DRS object's self_uri
-    ExperimentTicket:
+    BiosampleTicket:
       type: object
       properties:
-          experiment_id:
-              type: string
-              description: MoH submitter_sample_id from a Sample Registration associated with a specimen.
-          program:
-              type: string
-              description: MoH program ID
-          genomes:
+        biosample_id:
+          type: string
+          description: MoH submitter_sample_id from a Sample Registration associated with a specimen.
+        program:
+          type: string
+          description: MoH program ID
+        experiments:
+          type: object
+          description: Arrays of associated experiment IDs derived from the biosample, keyed by type.
+          properties:
+            wgs:
               type: array
-              description: An array of associated AnalysisDrsObjects that describe reads, e.g. fastqs.
               items:
-                  type: string
-          transcriptomes:
+                type: string
+            wts:
               type: array
-              description: An array of associated AnalysisDrsObjects that describe transcriptome data.
               items:
-                  type: string
-          variants:
+                type: string
+        runs:
+          type: array
+          description: An array of associated run IDs that describe raw reads derived from biosample.
+          items:
+            type: string
+        analyses:
+          type: object
+          description: Arrays of associated analysis IDs based on the biosample, keyed by analysis type.
+          properties:
+            reference_alignment:
               type: array
-              description: An array of associated AnalysisDataDrsObjects that describe variant files.
               items:
-                  type: string
-          reads:
+                type: string
+            sequence_variation:
               type: array
-              description: An array of associated AnalysisDataDrsObjects that describe read files, e.g. bams.
               items:
-                  type: string
+                type: string
+            sequence_annotation:
+              type: array
+              items:
+                type: string
     ExperimentDrsObject:
       type: object
       description: A DrsObject that describes the sequencing experiment.
       required:
-        - id
         - name
+        - id
         - contents
         - description
         - program
-#        - self_uri
-#        - size
-#        - created_time
-#        - checksums
       properties:
         name:
           type: string
-          description: The specimen identifier for the experiment, as defined in sample_registration in the MOHCCN data model.
+          description: The biosample identifier for the experiment.
         id:
           type: string
-          description: The alias for the experiment, as defined by the sequencing center
+          description: A unique ID for the experiment. Often the alias for the experiment, as defined by the sequencing center
+        contents:
+          type: array
+          description: The specific analysis contents objects that were generated from this experiment.
+          items:
+            $ref: '#/components/schemas/ContentsObject'
+        description:
+          type: string
+          description: the library strategy used in this experiment
+          enum:
+            - wgs
+            - wts
+        program:
+          type: string
+          description: The program this object was ingested as part of
+        metadata:
+          type: object
+          description: metadata about the experiment (see Experiment in ingest_openapi.yaml)
+        aliases:
+          type: array
+          items:
+            type: string
+          description: >-
+            A list of strings that can be used to find other metadata
+            about this `DrsObject` from external metadata sources. These
+            aliases can be used to represent secondary
+            accession numbers or external GUIDs.
         self_uri:
           type: string
           description: |-
@@ -457,36 +507,42 @@ components:
           # minItems: 1
           items:
             $ref: '#/components/schemas/Checksum'
-          description: >-
-            The checksum of the `DrsObject`. At least one checksum must be provided.
-            For blobs, the checksum is computed over the bytes in the blob.
-            For bundles, the checksum is computed over a sorted concatenation of the
-            checksums of its top-level contained objects (not recursive, names not included).
-            The list of checksums is sorted alphabetically (hex-code) before concatenation
-            and a further checksum is performed on the concatenated checksum value.
-            For example, if a bundle contains blobs with the following checksums:
-            md5(blob1) = 72794b6d
-            md5(blob2) = 5e089d29
-            Then the checksum of the bundle is:
-            md5( concat( sort( md5(blob1), md5(blob2) ) ) )
-            = md5( concat( sort( 72794b6d, 5e089d29 ) ) )
-            = md5( concat( 5e089d29, 72794b6d ) )
-            = md5( 5e089d2972794b6d )
-            = f7a29a04
+    RunDrsObject:
+      type: object
+      description: A DrsObject that describes the raw read files.
+      required:
+        - name
+        - id
+        - contents
+        - description
+        - program
+      properties:
+        name:
+          type: string
+          description: The experiment's name that this run is generated from.
+        id:
+          type: string
+          description: The unique ID for the run.
         contents:
           type: array
-          description: The specific analysis contents objects that were generated from this experiment.
+          description: The specific raw FASTQ files that were generated in this Run.
           items:
-            $ref: '#/components/schemas/AnalysisContentsObject'
+            $ref: '#/components/schemas/ContentsObject'
         description:
           type: string
-          description: the library strategy used in this experiment
+          description: For a Run object, the description should be `raw_reads`
           enum:
-            - wgs
-            - wts
+            - raw_reads
         program:
           type: string
           description: The program this object was ingested as part of
+        self_uri:
+          type: string
+          description: |-
+            A drs:// hostname-based URI, as defined in the DRS documentation, that tells clients how to access this object.
+            The intent of this field is to make DRS objects self-contained, and therefore easier for clients to store and pass around.  For example, if you arrive at this DRS JSON by resolving a compact identifier-based DRS URI, the `self_uri` presents you with a hostname and properly encoded DRS ID for use in subsequent `access` endpoint calls.
+          example:
+            drs://drs.example.org/314159
         aliases:
           type: array
           items:
@@ -498,39 +554,64 @@ components:
             accession numbers or external GUIDs.
         metadata:
           type: object
-          description: metadata about the experiment (see Experiment in ingest_openapi.yaml)
+          description: metadata about the run (see Run in ingest_openapi.yaml)
+        size:
+          type: integer
+          format: int64
+          description: The cumulative size, in bytes, of items in the `contents` field.
+        created_time:
+          type: string
+          format: date-time
+          description: |-
+            Timestamp of content creation in RFC3339.
+            (This is the creation time of the underlying content, not of the JSON object.)
+        updated_time:
+          type: string
+          format: date-time
+          description: >-
+            Timestamp of content update in RFC3339, identical to `created_time` in systems
+            that do not support updates.
+            (This is the update time of the underlying content, not of the JSON object.)
+        version:
+          type: string
+          description: >-
+            A string representing a version.
+            (Some systems may use checksum, a RFC3339 timestamp, or an incrementing version number.)
+        checksums:
+          type: array
+          # minItems: 1
+          items:
+            $ref: '#/components/schemas/Checksum'
     AnalysisDrsObject:
       type: object
-      description: A DrsObject that describes a sequencing analysis. It usually will consist of a data file, e.g. a variant or read file, and its associated index file. Its contents should also include any associated Experiments (as ExperimentContentObjects), ordered in order of appearance in the associated variant/read files.
+      description: A DrsObject that describes a sequencing analysis. It usually will consist of a data file, e.g. a variant or read file, and its associated index file. Its contents should also include any associated Experiments (as ContentObjects), ordered in order of appearance in the associated variant/read files.
       required:
+        - name
         - id
         - contents
         - description
         - program
         - reference_genome
-#        - self_uri
-#        - size
-#        - created_time
-#        - checksums
       properties:
-        id:
-          type: string
-          description: The descriptor for this analysis data entity
         name:
           type: string
-          description: same as the id
+          description: The unique ID for this analysis
+        id:
+          type: string
+          description: same as name
         contents:
           type: array
-          description: The specific analysis contents objects that comprise this analysis DRS entity. Should contain a AnalysisDataContentsObject, an optional AnalysisIndexContentsObject, and ExperimentContentsObjects corresponding to the experiments analyzed in the analysis data object.
+          description: The specific analysis contents objects that comprise this analysis DRS entity. Should contain one or more ContentsObjects that describe the data files in the analysis, and one or more ContentsObjects corresponding to the experiments analyzed in the analysis.
           minItems: 1
           items:
-            anyOf:
-              - $ref: '#/components/schemas/AnalysisDataContentsObject'
-              - $ref: '#/components/schemas/AnalysisIndexContentsObject'
-              - $ref: '#/components/schemas/ExperimentContentsObject'
+            $ref: '#/components/schemas/ContentsObject'
         description:
           type: string
           description: type of sequencing analysis
+          enum:
+            - reference_alignment
+            - sequence_variation
+            - sequence_annotation
         program:
           type: string
           description: The program this object was ingested as part of
@@ -586,46 +667,28 @@ components:
           # minItems: 1
           items:
             $ref: '#/components/schemas/Checksum'
-          description: >-
-            The checksum of the `DrsObject`. At least one checksum must be provided.
-            For blobs, the checksum is computed over the bytes in the blob.
-            For bundles, the checksum is computed over a sorted concatenation of the
-            checksums of its top-level contained objects (not recursive, names not included).
-            The list of checksums is sorted alphabetically (hex-code) before concatenation
-            and a further checksum is performed on the concatenated checksum value.
-            For example, if a bundle contains blobs with the following checksums:
-            md5(blob1) = 72794b6d
-            md5(blob2) = 5e089d29
-            Then the checksum of the bundle is:
-            md5( concat( sort( md5(blob1), md5(blob2) ) ) )
-            = md5( concat( sort( 72794b6d, 5e089d29 ) ) )
-            = md5( concat( 5e089d29, 72794b6d ) )
-            = md5( 5e089d2972794b6d )
-            = f7a29a04
         metadata:
           type: object
           description: metadata about the analysis (see Analysis in ingest_openapi.yaml)
-    AnalysisDataDrsObject:
+    DataDrsObject:
       type: object
-      description: A DrsObject that describes a analysis data file, e.g. a variant or read file.
+      description: A DrsObject that describes a data file, e.g. a variant or read file.
       required:
+        - name
         - id
-        - access_methods
         - description
+        - access_methods
         - program
-#        - self_uri
-#        - size
-#        - created_time
-#        - checksums
       properties:
-        id:
-          type: string
-          description: The filename for this analysis data file, including its file extensions.
         name:
           type: string
-          description: |-
-            The filename for this entity, not including its file extensions.
-            This string is made up of uppercase and lowercase letters, decimal digits, hypen, period, and underscore [A-Za-z0-9.-_]. See http://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap03.html#tag_03_282[portable filenames].
+          description: The filename for this data file, including its file extensions.
+        id:
+          type: string
+          description: The filename for this data file, including its file extensions.
+        description:
+          type: string
+          description: type of file
         access_methods:
           type: array
           minItems: 1
@@ -633,169 +696,9 @@ components:
             $ref: "#/components/schemas/AccessMethod"
           description: |-
             The list of access methods that can be used to fetch the `DrsObject`.
-        description:
-          type: string
         program:
             type: string
             description: The program this object was ingested as part of
-        self_uri:
-          type: string
-          description: |-
-            A drs:// hostname-based URI, as defined in the DRS documentation, that tells clients how to access this object.
-            The intent of this field is to make DRS objects self-contained, and therefore easier for clients to store and pass around.  For example, if you arrive at this DRS JSON by resolving a compact identifier-based DRS URI, the `self_uri` presents you with a hostname and properly encoded DRS ID for use in subsequent `access` endpoint calls.
-          example:
-            drs://drs.example.org/314159
-        size:
-          type: integer
-          format: int64
-          description: the blob size in bytes
-        created_time:
-          type: string
-          format: date-time
-          description: |-
-            Timestamp of content creation in RFC3339.
-            (This is the creation time of the underlying content, not of the JSON object.)
-        updated_time:
-          type: string
-          format: date-time
-          description: >-
-            Timestamp of content update in RFC3339, identical to `created_time` in systems
-            that do not support updates.
-            (This is the update time of the underlying content, not of the JSON object.)
-        version:
-          type: string
-          description: >-
-            A string representing a version.
-            (Some systems may use checksum, a RFC3339 timestamp, or an incrementing version number.)
-        checksums:
-          type: array
-          # minItems: 1
-          items:
-            $ref: '#/components/schemas/Checksum'
-          description: >-
-            The checksum of the `DrsObject`. At least one checksum must be provided.
-            For blobs, the checksum is computed over the bytes in the blob.
-            For bundles, the checksum is computed over a sorted concatenation of the
-            checksums of its top-level contained objects (not recursive, names not included).
-            The list of checksums is sorted alphabetically (hex-code) before concatenation
-            and a further checksum is performed on the concatenated checksum value.
-            For example, if a bundle contains blobs with the following checksums:
-            md5(blob1) = 72794b6d
-            md5(blob2) = 5e089d29
-            Then the checksum of the bundle is:
-            md5( concat( sort( md5(blob1), md5(blob2) ) ) )
-            = md5( concat( sort( 72794b6d, 5e089d29 ) ) )
-            = md5( concat( 5e089d29, 72794b6d ) )
-            = md5( 5e089d2972794b6d )
-            = f7a29a04
-        mime_type:
-          type: string
-          description: A string providing the mime-type of the DrsObject.
-        aliases:
-          type: array
-          items:
-            type: string
-          description: >-
-            A list of strings that can be used to find other metadata
-            about this `DrsObject` from external metadata sources. These
-            aliases can be used to represent secondary
-            accession numbers or external GUIDs.
-    AnalysisIndexDrsObject:
-      type: object
-      description: A DrsObject that describes an index file associated with an analysis drs object
-      required:
-        - id
-        - access_methods
-        - description
-        - program
-#        - self_uri
-#        - size
-#        - created_time
-#        - checksums
-      properties:
-        id:
-          type: string
-          description: The filename for this index file, including its file extensions.
-        name:
-          type: string
-          description: |-
-            The filename for this entity, not including its file extensions.
-            This string is made up of uppercase and lowercase letters, decimal digits, hypen, period, and underscore [A-Za-z0-9.-_]. See http://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap03.html#tag_03_282[portable filenames].
-        self_uri:
-          type: string
-          description: |-
-            A drs:// hostname-based URI, as defined in the DRS documentation, that tells clients how to access this object.
-            The intent of this field is to make DRS objects self-contained, and therefore easier for clients to store and pass around.  For example, if you arrive at this DRS JSON by resolving a compact identifier-based DRS URI, the `self_uri` presents you with a hostname and properly encoded DRS ID for use in subsequent `access` endpoint calls.
-          example:
-            drs://drs.example.org/314159
-        size:
-          type: integer
-          format: int64
-          description: the blob size in bytes
-        created_time:
-          type: string
-          format: date-time
-          description: |-
-            Timestamp of content creation in RFC3339.
-            (This is the creation time of the underlying content, not of the JSON object.)
-        updated_time:
-          type: string
-          format: date-time
-          description: >-
-            Timestamp of content update in RFC3339, identical to `created_time` in systems
-            that do not support updates.
-            (This is the update time of the underlying content, not of the JSON object.)
-        version:
-          type: string
-          description: >-
-            A string representing a version.
-            (Some systems may use checksum, a RFC3339 timestamp, or an incrementing version number.)
-        checksums:
-          type: array
-          items:
-            $ref: '#/components/schemas/Checksum'
-          description: >-
-            The checksum of the `DrsObject`. At least one checksum must be provided.
-            For blobs, the checksum is computed over the bytes in the blob.
-            For bundles, the checksum is computed over a sorted concatenation of the
-            checksums of its top-level contained objects (not recursive, names not included).
-            The list of checksums is sorted alphabetically (hex-code) before concatenation
-            and a further checksum is performed on the concatenated checksum value.
-            For example, if a bundle contains blobs with the following checksums:
-            md5(blob1) = 72794b6d
-            md5(blob2) = 5e089d29
-            Then the checksum of the bundle is:
-            md5( concat( sort( md5(blob1), md5(blob2) ) ) )
-            = md5( concat( sort( 72794b6d, 5e089d29 ) ) )
-            = md5( concat( 5e089d29, 72794b6d ) )
-            = md5( 5e089d2972794b6d )
-            = f7a29a04
-        access_methods:
-          type: array
-          minItems: 1
-          items:
-            $ref: "#/components/schemas/AccessMethod"
-          description: |-
-            The list of access methods that can be used to fetch the `DrsObject`.
-        description:
-          type: string
-          enum:
-            - index
-        program:
-            type: string
-            description: The program this object was ingested as part of
-        mime_type:
-          type: string
-          description: A string providing the mime-type of the DrsObject.
-        aliases:
-          type: array
-          items:
-            type: string
-          description: >-
-            A list of strings that can be used to find other metadata
-            about this `DrsObject` from external metadata sources. These
-            aliases can be used to represent secondary
-            accession numbers or external GUIDs.
     Checksum:
       type: object
       required:
@@ -861,75 +764,21 @@ components:
       anyOf:
         - $ref: '#/components/schemas/AccessUrlMethod'
         - $ref: '#/components/schemas/AccessIdMethod'
-    AnalysisContentsObject:
+    ContentsObject:
       type: object
       required:
         - name
         - id
+        - drs_uri
       properties:
         name:
           type: string
-          description: The identifier of the analysis object
+          description: The identifier of the linked DRS object
         id:
           type: string
-          description: The identifier of the analysis object
+          description: Alternate identifier for the linked DRS object
         drs_uri:
           type: array
-          description: The DRS uri(s) to the AnalysisDrsObject
-          items:
-            type: string
-    ExperimentContentsObject:
-      type: object
-      required:
-        - name
-        - id
-      properties:
-        name:
-          type: string
-          description: The submitter_sample_id of the experiment in the MoH model
-        id:
-          type: string
-          description: The id of the ExperimentDrsObject
-        drs_uri:
-          type: array
-          description: The DRS uri(s) to the ExperimentDrsObject
-          items:
-            type: string
-    AnalysisDataContentsObject:
-      type: object
-      required:
-        - name
-        - id
-      properties:
-        name:
-          type: string
-          description: The full filename of the analysis data file, including extensions.
-        id:
-          type: string
-          enum:
-            - variant
-            - read
-            - transcript
-        drs_uri:
-          type: array
-          description: The DRS uri(s) to the AnalysisDataDrsObject
-          items:
-            type: string
-    AnalysisIndexContentsObject:
-      type: object
-      required:
-        - name
-        - id
-      properties:
-        name:
-          type: string
-          description: The full filename of the index file, including extensions.
-        id:
-          type: string
-          enum:
-            - index
-        drs_uri:
-          type: array
-          description: The DRS uri(s) to the AnalysisIndexDrsObject
+          description: The DRS uri(s) to the linked DrsObject
           items:
             type: string

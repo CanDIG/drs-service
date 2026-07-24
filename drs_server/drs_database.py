@@ -370,12 +370,12 @@ def delete_program(program_id, tries=1):
     return None
 
 
-def list_experiments(program_ids=None, submitter_sample_ids=None):
+def list_biosamples(program_ids=None, submitter_sample_ids=None, verified_only=False):
     experiment_obj = aliased(DrsObject)
-    analysis_obj = aliased(DrsObject)
-    stmt = select(experiment_obj.name, experiment_obj.id, experiment_obj.program_id, experiment_obj.description, analysis_obj.name, analysis_obj.description, ContentsObject)
+    related_obj = aliased(DrsObject)
+    stmt = select(experiment_obj.name, experiment_obj.id, experiment_obj.program_id, experiment_obj.description, related_obj.id, related_obj.description, related_obj.meta_data, ContentsObject)
     stmt = stmt.join(experiment_obj, ContentsObject.drs_object_id == experiment_obj.id)
-    stmt = stmt.join(analysis_obj, ContentsObject.contents_id == analysis_obj.name)
+    stmt = stmt.join(related_obj, ContentsObject.contents_id == related_obj.id)
     stmt = stmt.filter(experiment_obj.description.in_(['wgs', 'wts']))
 
     if program_ids is not None:
@@ -388,24 +388,28 @@ def list_experiments(program_ids=None, submitter_sample_ids=None):
             result = row._mapping
             if result["name"] not in results_dict:
                 results_dict[result["name"]] = {
-                    "experiment_id": result["name"],
+                    "biosample_id": result["name"],
                     "program": result["program_id"],
-                    "genomes": [],
-                    "transcriptomes": [],
-                    "variants": [],
-                    "reads": [],
-                    "expressions": []
+                    "experiments": {
+                        "wgs": [],
+                        "wts": []
+                    },
+                    "runs": [],
+                    "analyses": {}
                 }
-            this_result = results_dict[result["name"]]
-            if result["description"] == "wgs" and result["id"] not in this_result["genomes"]:
-                results_dict[result["name"]]["genomes"].append(result["id"])
-            elif result["description"] == "wts" and result["id"] not in this_result["transcriptomes"]:
-                results_dict[result["name"]]["transcriptomes"].append(result["id"])
-            if result["description_1"] == "sequence_variation" and result["name_1"] not in this_result["variants"]:
-                results_dict[result["name"]]["variants"].append(result["name_1"])
-            elif result["description_1"] == "reference_alignment" and result["name_1"] not in this_result["reads"]:
-                results_dict[result["name"]]["reads"].append(result["name_1"])
-            elif result["description_1"] == "sequence_annotation" and result["name_1"] not in this_result["expressions"]:
-                results_dict[result["name"]]["expressions"].append(result["name_1"])
+            if result["description"] in ["wgs", "wts"] and result["id"] not in results_dict[result["name"]]["experiments"][result["description"]]:
+                results_dict[result["name"]]["experiments"][result["description"]].append(result["id"])
+            if result["description_1"] == "raw_reads":
+                results_dict[result["name"]]["runs"].append(result["id_1"])
+            else:
+                include_analysis = True
+                if verified_only:
+                    include_analysis = False
+                    if "last_verified" in result["meta_data"] and result["meta_data"]["last_verified"] != "":
+                        include_analysis = True
+                if include_analysis:
+                    if result["description_1"] not in results_dict[result["name"]]["analyses"]:
+                        results_dict[result["name"]]["analyses"][result["description_1"]] = []
+                    results_dict[result["name"]]["analyses"][result["description_1"]].append(result["id_1"])
         return list(results_dict.values())
     return None
