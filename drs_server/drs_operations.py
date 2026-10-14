@@ -49,9 +49,10 @@ def get_object(object_id, expand=False):
     new_object = None
     if object_id is not None:
         new_object = drs_database.get_drs_object(escape(object_id), expand)
-        auth_code = authz.is_authed(escape(object_id), connexion.request)
-        if auth_code != 200:
-            return {"message": f"Not authorized to access object {object_id}"}, auth_code
+        if new_object is not None and 'program' in new_object:
+            authzed = authz.is_program_authorized(connexion.request, new_object['program'])
+            if not authzed:
+                return {"message": f"Not authorized to access object {object_id}"}, 403
     if new_object is None:
         return {"message": "No matching object found"}, 404
     if "access_methods" in new_object:
@@ -110,11 +111,14 @@ def get_access_url(object_id, access_id, request=connexion.request):
 
 @app.route('/ga4gh/drs/v1/objects/<object_id>/download')
 def download_file(object_id, request=connexion.request):
+    drs_object = None
     if object_id is not None:
-        auth_code = authz.is_authed(escape(object_id), connexion.request)
-        if auth_code != 200:
-            return {"message": f"Not authorized to access object {object_id}"}, auth_code
-    drs_object = drs_database.get_drs_object(escape(object_id))
+        authzed = False
+        drs_object = drs_database.get_drs_object(escape(object_id))
+        if drs_object is not None and 'program' in drs_object:
+            authzed = authz.is_program_authorized(connexion.request, drs_object['program'])
+        if not authzed:
+            return {"message": f"Not authorized to access object {object_id}"}, 403
     if drs_object is None:
         return {"message": f"No object {object_id} was found"}, 404
     if "access_methods" not in drs_object:
