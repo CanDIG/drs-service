@@ -12,7 +12,7 @@ from candigv2_logging.logging import CanDIGLogger
 logger = CanDIGLogger(__file__)
 
 
-engine = create_engine(DRS_DB_PATH, echo=False, pool_timeout=5, pool_size=10)
+engine = create_engine(DRS_DB_PATH, echo=True, pool_timeout=5, pool_size=10)
 ObjectDBBase = declarative_base()
 ObjectDBBase.metadata.create_all(engine)
 Session = sessionmaker(bind=engine)
