@@ -213,6 +213,7 @@ def create_drs_object(obj, tries=1):
             if 'program' in obj:
                 program = session.query(Program).filter_by(id=obj['program']).one_or_none()
                 if program is None:
+                    logger.debug(f"Creating program {obj["program"]} inside create drs obj {obj["id"]}")
                     create_program({"id": obj["program"], "drsobjects": []})
                 new_object.program_id = obj['program']
 
